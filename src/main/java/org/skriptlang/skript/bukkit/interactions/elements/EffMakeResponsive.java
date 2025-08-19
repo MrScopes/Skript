@@ -21,7 +21,7 @@ import ch.njol.util.Kleenean;
 public class EffMakeResponsive extends Effect {
 
 	static {
-		Skript.registerEffect(EffMakeResponsive.class, "make %interactions% (1¦un|)responsive");
+		Skript.registerEffect(EffMakeResponsive.class, "make %interactions% [:un]responsive");
 	}
 
     private Expression<Interaction> interactions;
@@ -31,7 +31,7 @@ public class EffMakeResponsive extends Effect {
     @Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
         interactions = (Expression<Interaction>) exprs[0];
-		responsive = parseResult.mark == 0;
+		responsive = !parseResult.hasTag("un");
 		return true;
 	}
 
@@ -44,7 +44,7 @@ public class EffMakeResponsive extends Effect {
 
 	@Override
 	public String toString(@Nullable Event e, boolean debug) {
-		return "make " + interactions.toString(e, debug) + (responsive ? " " : " un") + "responsive";
+		return "make " + interactions.toString(e, debug) + (!responsive ? " un" : " ") + "responsive";
 	}
 
 }
