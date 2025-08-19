@@ -16,7 +16,7 @@ public class InteractionModule implements AddonModule {
 	
 	@Override
 	public boolean canLoad(SkriptAddon addon) {
-		return Skript.classExists("org.bukkit.damage.Interaction");
+		return Skript.classExists("org.bukkit.entity.Interaction");
 	}
 
 	@Override

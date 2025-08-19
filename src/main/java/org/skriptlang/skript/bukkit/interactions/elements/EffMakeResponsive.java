@@ -21,7 +21,7 @@ import ch.njol.util.Kleenean;
 public class EffMakeResponsive extends Effect {
 
 	static {
-		Skript.registerEffect(EffMakeResponsive.class, "make %interactions% responsive"); // (1¦un)
+		Skript.registerEffect(EffMakeResponsive.class, "make %interactions% (1¦un|)responsive");
 	}
 
     private Expression<Interaction> interactions;
