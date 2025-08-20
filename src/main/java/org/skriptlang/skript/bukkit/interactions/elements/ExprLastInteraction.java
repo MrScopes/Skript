@@ -10,6 +10,11 @@ import ch.njol.skript.lang.Expression;
 import ch.njol.skript.lang.ExpressionType;
 import ch.njol.skript.lang.SkriptParser.ParseResult;
 import ch.njol.util.Kleenean;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.bukkit.entity.Interaction;
 import org.bukkit.entity.Interaction.PreviousInteraction;
 import org.bukkit.event.inventory.ClickType;
@@ -20,25 +25,35 @@ import org.jetbrains.annotations.Nullable;
 })
 @Examples({
 })
-@Since("2.10")
+@Since("INSERT VERSION")
 
 public class ExprLastInteraction extends SimplePropertyExpression<Interaction, PreviousInteraction> {
 
 	static {
-		Skript.registerExpression(ExprLastInteraction.class, PreviousInteraction.class, ExpressionType.PROPERTY,
-				"last right click interaction of %interactions%", 
-				"last (attack|left click) interaction of %interactions%",
-				"last interaction of %interactions%"
-				);
+		List<String> patterns = new ArrayList<>();
+		patterns.addAll(Arrays.asList(getPatterns("last right click interaction", "interactions")));
+		patterns.addAll(Arrays.asList(getPatterns("last (attack|left click) interaction", "interactions")));
+		patterns.addAll(Arrays.asList(getPatterns("last interaction", "interactions")));
+
+		Skript.registerExpression(ExprLastInteraction.class, PreviousInteraction.class, ExpressionType.PROPERTY, patterns.toArray(String[]::new));
 	}
 
 	private ClickType clicktype;
 
+	/*
+	 * 1 = right click
+	 * 2 = left click
+	 * 3 = last interaction
+	 */
+	private int mark;
+
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-        clicktype = switch(matchedPattern) {
-            case 0 -> ClickType.RIGHT;
-            case 1 -> ClickType.LEFT;
+		this.mark = (matchedPattern / 2) + 1;
+
+        clicktype = switch (mark) {
+            case 1 -> ClickType.RIGHT;
+            case 2 -> ClickType.LEFT;
             default -> ClickType.UNKNOWN;
         };
             
