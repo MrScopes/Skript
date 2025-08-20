@@ -1,6 +1,5 @@
 package org.skriptlang.skript.bukkit.interactions.elements;
 
-import org.bukkit.block.Block;
 import org.bukkit.entity.Interaction;
 
 import ch.njol.skript.conditions.base.PropertyCondition;
@@ -25,22 +24,20 @@ public class CondIsResponsive extends PropertyCondition<Interaction> {
 		register(CondIsResponsive.class, "[:un]responsive", "interactions");
 	}
 
-	private boolean responsive;
-	
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		responsive = !parseResult.hasTag("un");
-		return super.init(exprs, matchedPattern, isDelayed, parseResult);
+		setNegated(parseResult.hasTag("un"));
+		return true;
 	}
 
 	@Override
 	public boolean check(Interaction interaction) {
-		return interaction.isResponsive() == responsive;
+		return isNegated() ^ interaction.isResponsive();
 	}
-	
+
 	@Override
-	protected String getPropertyName() {
-		return !responsive ? "un" : "" + "responsive";
+	public String getPropertyName() {
+		return "interaction is" + (isNegated() ? "un" : "") + " responsive";
 	}
 	
 }

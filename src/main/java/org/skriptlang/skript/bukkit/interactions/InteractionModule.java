@@ -7,6 +7,7 @@ import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.registrations.Classes;
 
 import org.bukkit.entity.Interaction;
+import org.bukkit.entity.Interaction.PreviousInteraction;
 import org.skriptlang.skript.addon.AddonModule;
 import org.skriptlang.skript.addon.SkriptAddon;
 
@@ -29,6 +30,14 @@ public class InteractionModule implements AddonModule {
 			.requiredPlugins("Minecraft 1.19.4+")
 			.defaultExpression(new EventValueExpression<>(Interaction.class))
 			.changer(DefaultChangers.nonLivingEntityChanger));
+
+		//Classes.registerClass(new ClassInfo<>(PreviousInteraction.class, "interaction instance")
+		//	.user("interactions instances?")
+		//	.name("Interaction Instance")
+			//.description("An instance of an interaction with an interaction entity.")
+		//	.since("INSERT VERSION")
+			//.requiredPlugins("Minecraft 1.19.4+")
+			//.defaultExpression(new EventValueExpression<>(PreviousInteraction.class)));
 	}
 
 	@Override
