@@ -9,7 +9,7 @@ import ch.njol.skript.expressions.base.SimplePropertyExpression;
 public class ExprPreviousInteractionPlayer extends SimplePropertyExpression<PreviousInteraction, OfflinePlayer> {
 
 	static {
-		registerDefault(ExprInteractionHeightWidth.class, Float.class, "player", "previousinteractions");
+		registerDefault(ExprPreviousInteractionPlayer.class, OfflinePlayer.class, "player", "previousinteractions");
 	}
 
     @Override

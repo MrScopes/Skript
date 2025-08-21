@@ -9,7 +9,7 @@ import ch.njol.skript.util.Date;
 public class ExprPreviousInteractionTime extends SimplePropertyExpression<PreviousInteraction, Date> {
 
 	static {
-		registerDefault(ExprInteractionHeightWidth.class, Float.class, "time", "previousinteractions");
+		registerDefault(ExprPreviousInteractionTime.class, Date.class, "time", "previousinteractions");
 	}
 
     @Override
