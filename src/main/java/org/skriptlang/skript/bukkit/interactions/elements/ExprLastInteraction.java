@@ -77,7 +77,7 @@ public class ExprLastInteraction extends SimplePropertyExpression<Interaction, P
 
 	@Override
 	protected String getPropertyName() {
-		return "";
+		return "previous interaction";
 	}
 
 	@Override

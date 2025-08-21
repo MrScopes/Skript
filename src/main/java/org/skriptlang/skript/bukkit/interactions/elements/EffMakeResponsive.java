@@ -37,7 +37,6 @@ public class EffMakeResponsive extends Effect {
 	@Override
 	protected void execute(Event e) {
 		for (Interaction interaction : interactions.getArray(e)) {
-			System.out.println(responsive);
 			interaction.setResponsive(responsive);
 		}
 	}

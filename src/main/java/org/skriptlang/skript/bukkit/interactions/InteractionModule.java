@@ -31,13 +31,13 @@ public class InteractionModule implements AddonModule {
 			.defaultExpression(new EventValueExpression<>(Interaction.class))
 			.changer(DefaultChangers.nonLivingEntityChanger));
 
-		//Classes.registerClass(new ClassInfo<>(PreviousInteraction.class, "interaction instance")
-		//	.user("interactions instances?")
-		//	.name("Interaction Instance")
-			//.description("An instance of an interaction with an interaction entity.")
-		//	.since("INSERT VERSION")
-			//.requiredPlugins("Minecraft 1.19.4+")
-			//.defaultExpression(new EventValueExpression<>(PreviousInteraction.class)));
+		Classes.registerClass(new ClassInfo<>(PreviousInteraction.class, "previousinteraction")
+			.user("previousinteractions?")
+			.name("Previous Interaction")
+			.description("The previous interaction with an interaction entity.")
+			.since("INSERT VERSION")
+			.requiredPlugins("Minecraft 1.19.4+")
+			.defaultExpression(new EventValueExpression<>(PreviousInteraction.class)));
 	}
 
 	@Override
