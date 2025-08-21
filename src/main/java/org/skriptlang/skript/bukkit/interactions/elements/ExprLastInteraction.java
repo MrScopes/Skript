@@ -41,19 +41,19 @@ public class ExprLastInteraction extends SimplePropertyExpression<Interaction, P
 	private ClickType clicktype;
 
 	/*
-	 * 1 = right click
-	 * 2 = left click
-	 * 3 = last interaction
+	 * 0 = right click
+	 * 1 = left click
+	 * 2 = last interaction
 	 */
 	private int mark;
 
 	@Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
-		this.mark = (matchedPattern / 2) + 1;
+		this.mark = matchedPattern / 2;
 
         clicktype = switch (mark) {
-            case 1 -> ClickType.RIGHT;
-            case 2 -> ClickType.LEFT;
+            case 0 -> ClickType.RIGHT;
+            case 1 -> ClickType.LEFT;
             default -> ClickType.UNKNOWN;
         };
             

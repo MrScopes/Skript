@@ -27,7 +27,6 @@ public class EffMakeResponsive extends Effect {
     private Expression<Interaction> interactions;
 	private boolean responsive;
 
-	@SuppressWarnings("unchecked")
     @Override
 	public boolean init(Expression<?>[] exprs, int matchedPattern, Kleenean isDelayed, ParseResult parseResult) {
         interactions = (Expression<Interaction>) exprs[0];
@@ -38,6 +37,7 @@ public class EffMakeResponsive extends Effect {
 	@Override
 	protected void execute(Event e) {
 		for (Interaction interaction : interactions.getArray(e)) {
+			System.out.println(responsive);
 			interaction.setResponsive(responsive);
 		}
 	}
