@@ -2,9 +2,12 @@ package org.skriptlang.skript.bukkit.interactions;
 
 import ch.njol.skript.Skript;
 import ch.njol.skript.classes.ClassInfo;
+import ch.njol.skript.classes.Parser;
 import ch.njol.skript.classes.data.DefaultChangers;
 import ch.njol.skript.expressions.base.EventValueExpression;
+import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.registrations.Classes;
+import ch.njol.skript.util.BlockUtils;
 
 import org.bukkit.entity.Interaction;
 import org.bukkit.entity.Interaction.PreviousInteraction;
@@ -12,6 +15,8 @@ import org.skriptlang.skript.addon.AddonModule;
 import org.skriptlang.skript.addon.SkriptAddon;
 
 import java.io.IOException;
+
+import javax.annotation.Nullable;
 
 public class InteractionModule implements AddonModule {
 	
@@ -36,6 +41,27 @@ public class InteractionModule implements AddonModule {
 			.name("Previous Interaction")
 			.description("The previous interaction with an interaction entity.")
 			.since("INSERT VERSION")
+			.parser(new Parser<PreviousInteraction>() {
+					@Override
+					public @Nullable PreviousInteraction parse(String input, ParseContext context) {
+						return null;
+					}
+
+					@Override
+					public boolean canParse(final ParseContext context) {
+						return false;
+					}
+
+					@Override
+					public String toString(PreviousInteraction interaction, int flags) {
+						return "interaction: " + "player: " + interaction.getPlayer() + " timestamp: " + interaction.getTimestamp();
+					}
+
+					@Override
+					public String toVariableNameString(PreviousInteraction interaction) {
+						return "previousinteraction:" + interaction.getPlayer() + "@" + interaction.getTimestamp();
+					}
+				})
 			.requiredPlugins("Minecraft 1.19.4+")
 			.defaultExpression(new EventValueExpression<>(PreviousInteraction.class)));
 	}
