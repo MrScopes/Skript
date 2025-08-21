@@ -8,6 +8,7 @@ import ch.njol.skript.expressions.base.EventValueExpression;
 import ch.njol.skript.lang.ParseContext;
 import ch.njol.skript.registrations.Classes;
 import ch.njol.skript.util.BlockUtils;
+import ch.njol.skript.util.Date;
 
 import org.bukkit.entity.Interaction;
 import org.bukkit.entity.Interaction.PreviousInteraction;
@@ -54,7 +55,7 @@ public class InteractionModule implements AddonModule {
 
 					@Override
 					public String toString(PreviousInteraction interaction, int flags) {
-						return "interaction: " + "player: " + interaction.getPlayer() + " timestamp: " + interaction.getTimestamp();
+						return "interaction clicked by " + interaction.getPlayer().getName() + " at world tick " + interaction.getTimestamp();
 					}
 
 					@Override

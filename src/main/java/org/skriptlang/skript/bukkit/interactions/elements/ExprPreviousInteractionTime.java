@@ -4,27 +4,25 @@ import org.bukkit.entity.Interaction.PreviousInteraction;
 import org.jetbrains.annotations.Nullable;
 
 import ch.njol.skript.expressions.base.SimplePropertyExpression;
-import ch.njol.skript.util.Date;
-
-public class ExprPreviousInteractionTime extends SimplePropertyExpression<PreviousInteraction, Date> {
+public class ExprPreviousInteractionTime extends SimplePropertyExpression<PreviousInteraction, Long> {
 
 	static {
-		registerDefault(ExprPreviousInteractionTime.class, Date.class, "time", "previousinteractions");
+		registerDefault(ExprPreviousInteractionTime.class, Long.class, "world tick", "previousinteractions");
 	}
 
     @Override
-    public @Nullable Date convert(PreviousInteraction interaction) {
-        return new Date(interaction.getTimestamp());
+    public @Nullable Long convert(PreviousInteraction interaction) {
+        return interaction.getTimestamp();
     }
 
     @Override
-    public Class<? extends Date> getReturnType() {
-        return Date.class;
+    public Class<? extends Long> getReturnType() {
+        return Long.class;
     }
 
     @Override
     protected String getPropertyName() {
-        return "time";
+        return "world tick";
     }
 
 }
