@@ -249,6 +249,10 @@ long parse time warning threshold: 2 seconds
 #   stating that the statement has taken a long time to parse.
 # A value of 0 seconds means that this warning should be disabled.
 
+parse profiling:
+	enabled: false
+	minimum time: 0 milliseconds
+
 variable changes until save: 1000
 # This setting controls the total number of times that global variables need to be changed
 #   until saving variables to 'variables.csv'.

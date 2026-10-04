@@ -19,6 +19,7 @@ import ch.njol.skript.variables.HintManager;
 import ch.njol.util.OpenCloseable;
 import ch.njol.util.StringUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,6 +100,133 @@ public class ScriptLoader {
 	 */
 	private static ParserInstance getParser() {
 		return ParserInstance.get();
+	}
+
+	private static final ThreadLocal<Deque<ParseProfileEntry>> parseProfileStack = ThreadLocal.withInitial(ArrayDeque::new);
+	private static final ThreadLocal<Map<Script, List<ParseProfileEntry>>> parseProfileRoots = ThreadLocal.withInitial(LinkedHashMap::new);
+
+	private static final class ParseProfileEntry {
+		private final long start = System.nanoTime();
+		private final List<ParseProfileEntry> children = new ArrayList<>();
+		private long totalTime;
+		private long selfTime;
+		private int line;
+		private String source;
+	}
+
+	private static ParseProfileEntry startParseProfile() {
+		if (!SkriptConfig.parseProfilingEnabled.value())
+			return null;
+
+		ParseProfileEntry entry = new ParseProfileEntry();
+		Deque<ParseProfileEntry> stack = parseProfileStack.get();
+
+		if (stack.isEmpty()) {
+			parseProfileRoots.get().computeIfAbsent(getParser().getCurrentScript(), ignored -> new ArrayList<>()).add(entry);
+		} else {
+			stack.peek().children.add(entry);
+		}
+
+		stack.push(entry);
+		return entry;
+	}
+
+	private static void finishParseProfile(@Nullable ParseProfileEntry entry, Node node, String source) {
+		if (entry == null)
+			return;
+
+		entry.totalTime = System.nanoTime() - entry.start;
+		long childTime = 0;
+
+		for (ParseProfileEntry child : entry.children)
+			childTime += child.totalTime;
+
+		entry.selfTime = Math.max(0, entry.totalTime - childTime);
+		entry.line = node.getLine();
+		entry.source = source;
+
+		Deque<ParseProfileEntry> stack = parseProfileStack.get();
+		ParseProfileEntry popped = stack.pop();
+		assert popped == entry;
+		if (stack.isEmpty())
+			parseProfileStack.remove();
+	}
+
+	private static boolean shouldPrintParseProfile(ParseProfileEntry entry, double minimumMs) {
+		if (entry.selfTime / 1_000_000.0 >= minimumMs)
+			return true;
+		for (ParseProfileEntry child : entry.children) {
+			if (shouldPrintParseProfile(child, minimumMs))
+				return true;
+		}
+		return false;
+	}
+
+	private static void printParseProfileEntry(ParseProfileEntry entry, String prefix, boolean last, double minimumMs) {
+		if (!shouldPrintParseProfile(entry, minimumMs))
+			return;
+
+		String branch = last ? "└─ " : "├─ ";
+		double displayMs = entry.children.isEmpty()
+			? entry.selfTime / 1_000_000.0
+			: entry.totalTime / 1_000_000.0;
+
+		String timing = String.format(Locale.ROOT, "%.3fms", displayMs);
+		String line = String.format(Locale.ROOT, "L%-4d", entry.line);
+
+		// aqua for parents
+		String timingColor = entry.children.isEmpty() ? ChatColor.GRAY.toString() : ChatColor.AQUA.toString();
+
+		// timing, line number, then source
+		Skript.info(
+			timingColor + String.format(Locale.ROOT, "%12s", timing)
+				+ "  " + ChatColor.YELLOW + line
+				+ "  " + ChatColor.DARK_GRAY + prefix + branch
+				+ ChatColor.WHITE + TextComponentParser.instance().escape(entry.source)
+		);
+
+		List<ParseProfileEntry> visibleChildren = entry.children.stream()
+			.filter(child -> shouldPrintParseProfile(child, minimumMs))
+			.sorted(Comparator.comparingInt(child -> child.line))
+			.toList();
+
+		String childPrefix = prefix + (last ? "   " : "│  ");
+		for (int i = 0; i < visibleChildren.size(); i++)
+			printParseProfileEntry(visibleChildren.get(i), childPrefix, i == visibleChildren.size() - 1, minimumMs);
+	}
+
+	private static void printAndClearParseProfile() {
+		if (!SkriptConfig.parseProfilingEnabled.value())
+			return;
+
+		Map<Script, List<ParseProfileEntry>> profiles = parseProfileRoots.get();
+		double minimumMs = SkriptConfig.parseProfilingMinimumTime.value()
+			.getAs(Timespan.TimePeriod.MILLISECOND);
+
+		boolean first = true;
+		for (Map.Entry<Script, List<ParseProfileEntry>> profile : profiles.entrySet()) {
+			List<ParseProfileEntry> visibleRoots = profile.getValue().stream()
+				.filter(entry -> shouldPrintParseProfile(entry, minimumMs))
+				.sorted(Comparator.comparingInt(entry -> entry.line))
+				.toList();
+
+			if (visibleRoots.isEmpty())
+				continue;
+
+			if (!first)
+				Skript.info("");
+
+			Skript.info(ChatColor.AQUA + profile.getKey().getConfig().getFileName() + " — Parse Profile");
+			Skript.info("");
+			for (int i = 0; i < visibleRoots.size(); i++)
+				printParseProfileEntry(visibleRoots.get(i), "", i == visibleRoots.size() - 1, minimumMs);
+
+			first = false;
+		}
+
+		profiles.clear();
+		parseProfileRoots.remove();
+		parseProfileStack.remove();
 	}
 
 	/*
@@ -595,6 +723,11 @@ public class ScriptLoader {
 						parser.setCurrentStructure(structure);
 						parser.setNode(loadingInfo.nodeMap.get(structure));
 
+						Node structureNode = loadingInfo.nodeMap.get(structure);
+						String structureLine = structureNode != null && structureNode.getKey() != null
+							? structureNode.getKey()
+							: structure.toString();
+						ParseProfileEntry profile = startParseProfile();
 						try {
 							if (!structure.load()) {
 								loadingInfo.structures.remove(structure);
@@ -605,10 +738,16 @@ public class ScriptLoader {
 							Skript.exception(e, "An error occurred while trying to load a Structure.");
 							loadingInfo.structures.remove(structure);
 							return true;
+						} finally {
+							if (structureNode != null)
+								finishParseProfile(profile, structureNode, structureLine);
 						}
 						return false;
 					});
 					parser.setInactive();
+
+					if (SkriptConfig.parseProfilingEnabled.value())
+						printAndClearParseProfile();
 
 					// post-loading
 					loadingStructures.removeIf(loadingStructure -> {
@@ -1044,13 +1183,18 @@ public class ScriptLoader {
 
 			TriggerItem item = null;
 			if (subNode instanceof SimpleNode) {
-				long start = System.currentTimeMillis();
-				item = Statement.parse(expr, items, "Can't understand this condition/effect: " + expr);
+				long start = System.nanoTime();
+				ParseProfileEntry profile = startParseProfile();
+				try {
+					item = Statement.parse(expr, items, "Can't understand this condition/effect: " + expr);
+				} finally {
+					finishParseProfile(profile, subNode, expr);
+				}
 				if (item == null)
 					continue;
 				long requiredTime = SkriptConfig.longParseTimeWarningThreshold.value().getAs(Timespan.TimePeriod.MILLISECOND);
 				if (requiredTime > 0) {
-					long timeTaken = System.currentTimeMillis() - start;
+					long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
 					if (timeTaken > requiredTime)
 						Skript.warning(
 							"The current line took a long time to parse (" + new Timespan(timeTaken) + ")."
@@ -1064,6 +1208,7 @@ public class ScriptLoader {
 				items.add(item);
 			} else if (subNode instanceof SectionNode subSection) {
 
+				ParseProfileEntry profile = startParseProfile();
 				//noinspection resource - manual management is intentional
 				RetainingLogHandler handler = SkriptLogger.startRetainingLog();
 				find_section:
@@ -1134,6 +1279,7 @@ public class ScriptLoader {
 					if (item != null && (Skript.debug() || subNode.debug()))
 						Skript.debug(TextComponentParser.instance().escape(parser.getIndentation() + item.toString(null, true)));
 					afterParse.printLog();
+					finishParseProfile(profile, subNode, expr);
 				}
 
 				items.add(item);
